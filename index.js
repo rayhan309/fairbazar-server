@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const fairbazar = client.db("fairbazar");
     const kids = fairbazar.collection("kids");
@@ -40,10 +40,9 @@ async function run() {
         const newUser = req.body;
         newUser.addTime = new Date();
         const result = await users.insertOne(newUser);
-        console.log(result);
         res.send(result);
       } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -53,7 +52,7 @@ async function run() {
         const result = await users.find().toArray();
         res.send(result);
       } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -66,7 +65,7 @@ async function run() {
         // console.log(result);
         res.send(result);
       } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -97,7 +96,7 @@ async function run() {
         // console.log(result);
         res.send(result);
       } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -110,7 +109,7 @@ async function run() {
         // console.log(result);
         res.send(result);
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
