@@ -149,6 +149,17 @@ async function run() {
       }
     });
 
+    app.delete('/addCart/:id', async(req, res) => {
+      try{
+        const {id} = req.params;
+        const query = {_id: new ObjectId(id)}
+        const result = await addedCart.deleteOne(query);
+        res.send(result);
+      }catch{
+         res.status(500).send({ message: "internal server error!" });
+      }
+    })
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log(
