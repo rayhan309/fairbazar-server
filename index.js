@@ -129,6 +129,8 @@ async function run() {
 
     app.get("/addCart", async (req, res) => {
       try {
+         const email = req.query.email;
+        const query = {email: email};
         const result = await addedCart.find().toArray();
         res.send(result);
       } catch {
@@ -136,11 +138,11 @@ async function run() {
       }
     });
 
-    app.get("/addCart", async (req, res) => {
+    app.get("/addCart/:email", async (req, res) => {
       try {
-        const email = req.query.email;
-        const query = {email: email};
-        const result = await addedCart.findOne(query);
+        const {email} = req.params;
+        const query = {userEmail: email};
+        const result = await addedCart.find(query).toArray();
         res.send(result);
       } catch {
         res.status(500).send({ message: "internal server error!" });
