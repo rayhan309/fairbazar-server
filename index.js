@@ -28,6 +28,7 @@ async function run() {
     const fairbazar = client.db("fairbazar");
     const kids = fairbazar.collection("kids");
     const users = fairbazar.collection("users");
+    const addedCart = fairbazar.collection("addedCart");
 
     // const uri = "mongodb+srv://sadia:az2ysmsQhETBpTME@cluster0.sr4duj3.mongodb.net/?appName=Cluster0";
     // const uri = "mongodb+srv://fairbazar:TliIjcf3sWguLBEx@cluster0.sr4duj3.mongodb.net/?appName=Cluster0";
@@ -60,7 +61,7 @@ async function run() {
     app.get("/user", async (req, res) => {
       try {
         const email = req.query.email;
-        const query = {email: email};
+        const query = { email: email };
         const result = await users.findOne(query);
         // console.log(result);
         res.send(result);
@@ -110,6 +111,38 @@ async function run() {
         res.send(result);
       } catch (error) {
         // console.log(error);
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.post("/addCart", async (req, res) => {
+      try {
+        const newAddCart = req.body;
+        newAddCart.addTime = new Date();
+        const result = await addedCart.insertOne(newAddCart);
+        // console.log(result);
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get("/addCart", async (req, res) => {
+      try {
+        const result = await addedCart.find().toArray();
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get("/addCart", async (req, res) => {
+      try {
+        const email = req.query.email;
+        const query = {email: email};
+        const result = await addedCart.findOne(query);
+        res.send(result);
+      } catch {
         res.status(500).send({ message: "internal server error!" });
       }
     });
