@@ -5,6 +5,12 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 4800;
 
+// ssl commerz
+const SSLCommerzPayment = require('sslcommerz-lts');
+const store_id = process.env.SSL_STORE_ID;
+const store_passwd = process.env.SSL_STORE_PASS;
+const is_live = false //true for live, false for sandbox
+
 // mdwr
 app.use(cors());
 app.use(express.json());
