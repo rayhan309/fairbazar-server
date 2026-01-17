@@ -378,16 +378,16 @@ async function run() {
     // ==========================
     app.post("/success", async (req, res) => {
       try {
-        const { val_id, tran_id } = req.body;
+        const { valId, tid } = req.body;
 
-        const validation = await validatePayment(val_id);
+        const validation = await validatePayment(valId);
 
         // const db = await connectDB();
         // const orders = db.collection("orders");
 
         if (validation.status === "VALID") {
           await orders.updateOne(
-            { tran_id },
+            { tid },
             { $set: { status: "PAID", paidAt: new Date() } },
           );
           return res.send("<h2>Payment Successful 🎉</h2>");
