@@ -204,7 +204,10 @@ async function run() {
       try {
         const { email } = req.params;
         const query = { userEmail: email };
-        const result = await addedCart.find(query).sort({addTime: -1}).toArray();
+        const result = await addedCart
+          .find(query)
+          .sort({ addTime: -1 })
+          .toArray();
         res.send(result);
       } catch {
         res.status(500).send({ message: "internal server error!" });
@@ -231,9 +234,6 @@ async function run() {
     // ==========================
     app.post("/create-order", async (req, res) => {
       try {
-        // const db = await connectDB();
-        // const orders = db.collection("orders");
-
         const { name, email, phone, amount } = req.body;
         const tran_id = new ObjectId().toString();
 
@@ -272,12 +272,22 @@ async function run() {
         const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
         const response = await sslcz.init(data);
 
-        res.send({
+        // 🔥 DEBUG
+        console.log("SSL RAW RESPONSE:", response);
+
+        if (!response.GatewayPageURL) {
+          return res.status(400).json({
+            error: "SSLCommerz did not return Gateway URL",
+            ssl_response: response,
+          });
+        }
+
+        res.json({
           gatewayURL: response.GatewayPageURL,
           tran_id,
         });
       } catch (err) {
-        console.log(err);
+        console.log("CREATE ORDER ERROR:", err);
         res.status(500).json({ error: "Payment init failed" });
       }
     });
@@ -300,7 +310,7 @@ async function run() {
       });
 
       return response.data;
-    };
+    }
 
     // ==========================
     // SUCCESS
