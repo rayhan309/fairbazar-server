@@ -344,7 +344,7 @@ async function run() {
 
         res.json({
           gatewayURL: response.GatewayPageURL,  
-          
+
           tran_id,
         });
       } catch (err) {
