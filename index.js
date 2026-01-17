@@ -58,6 +58,7 @@ async function run() {
     const users = fairbazar.collection("users");
     const addedCart = fairbazar.collection("addedCart");
     const orders = fairbazar.collection("orders");
+    const discount = fairbazar.collection("discount");
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
@@ -225,6 +226,26 @@ async function run() {
       }
     });
 
+    app.post("/discount", async (req, res) => {
+      try {
+        const newDiscount = req.body;
+        newDiscount.addTime = new Date();
+        const result = await discount.insertOne(newDiscount);
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get('/discount', async(req, res) => {
+      try{
+        const result = await discount.find().toArray();
+        res.send(result);
+      }catch{
+        res.status(500).send({message: 'internal server erorr!'})
+      }
+    });
+
     // payment apis
     //sslcommerz init
     // const tran_id = new ObjectId().toString();
@@ -343,7 +364,7 @@ async function run() {
         }
 
         res.json({
-          gatewayURL: response.GatewayPageURL,  
+          gatewayURL: response.GatewayPageURL,
 
           tran_id,
         });
@@ -451,7 +472,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
     // );
   } finally {
     // Ensures that the client will close when you finish/error
