@@ -59,6 +59,7 @@ async function run() {
     const addedCart = fairbazar.collection("addedCart");
     const orders = fairbazar.collection("orders");
     const discount = fairbazar.collection("discount");
+    const feature = fairbazar.collection("feature");
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
@@ -237,12 +238,32 @@ async function run() {
       }
     });
 
-    app.get('/discount', async(req, res) => {
-      try{
-        const result = await discount.find().toArray();
+    app.get("/discount", async (req, res) => {
+      try {
+        const result = await discount.find().sort({ addTime: -1 }).toArray();
         res.send(result);
-      }catch{
-        res.status(500).send({message: 'internal server erorr!'})
+      } catch {
+        res.status(500).send({ message: "internal server erorr!" });
+      }
+    });
+
+    app.post("/feature", async (req, res) => {
+      try {
+        const newDiscount = req.body;
+        newDiscount.addTime = new Date();
+        const result = await feature.insertOne(newDiscount);
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get("/feature", async (req, res) => {
+      try {
+        const result = await feature.find().sort({ addTime: -1 }).toArray();
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server erorr!" });
       }
     });
 
