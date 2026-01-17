@@ -204,7 +204,7 @@ async function run() {
       try {
         const { email } = req.params;
         const query = { userEmail: email };
-        const result = await addedCart.find(query).toArray();
+        const result = await addedCart.find(query).sort({addTime: -1}).toArray();
         res.send(result);
       } catch {
         res.status(500).send({ message: "internal server error!" });
