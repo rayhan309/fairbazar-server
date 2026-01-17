@@ -305,9 +305,9 @@ async function run() {
           currency: "BDT",
           tran_id,
 
-          success_url: `${process.env.SERVER_URL}/success`,
-          fail_url: `${process.env.SERVER_URL}/fail`,
-          cancel_url: `${process.env.SERVER_URL}/cancel`,
+          success_url: `${process.env.CLIENT_URL}/success`,
+          fail_url: `${process.env.CLIENT_URL}/fail`,
+          cancel_url: `${process.env.CLIENT_URL}/cancel`,
           ipn_url: `${process.env.SERVER_URL}/ipn`,
 
           shipping_method: "Courier", // REQUIRED
