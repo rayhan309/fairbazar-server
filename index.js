@@ -232,12 +232,65 @@ async function run() {
     // ==========================
     // CREATE ORDER + INIT PAY
     // ==========================
+    // app.post("/create-order", async (req, res) => {
+    //   try {
+    //     // const db = await connectDB();
+    //     // const orders = db.collection("orders");
+
+    //     const { name, email, phone, amount } = req.body;
+    //     const tran_id = new ObjectId().toString();
+
+    //     // Save order as PENDING
+    //     await orders.insertOne({
+    //       tran_id,
+    //       amount,
+    //       currency: "BDT",
+    //       status: "PENDING",
+    //       customer: { name, email, phone },
+    //       createdAt: new Date(),
+    //     });
+
+    //     const data = {
+    //       total_amount: amount,
+    //       currency: "BDT",
+    //       tran_id,
+
+    //       success_url: `${process.env.SERVER_URL}/success`,
+    //       fail_url: `${process.env.SERVER_URL}/fail`,
+    //       cancel_url: `${process.env.SERVER_URL}/cancel`,
+    //       ipn_url: `${process.env.SERVER_URL}/ipn`,
+
+    //       product_name: "Ecommerce Order",
+    //       product_category: "General",
+    //       product_profile: "general",
+
+    //       cus_name: name,
+    //       cus_email: email,
+    //       cus_phone: phone,
+    //       cus_add1: "Dhaka",
+    //       cus_city: "Dhaka",
+    //       cus_country: "Bangladesh",
+    //     };
+
+    //     const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+    //     const response = await sslcz.init(data);
+
+    //     res.send({
+    //       gatewayURL: response.GatewayPageURL,
+    //       tran_id,
+    //     });
+    //   } catch (err) {
+    //     // console.log(err);
+    //     res.status(500).json({ error: "Payment init failed" });
+    //   }
+    // });
+
     app.post("/create-order", async (req, res) => {
       try {
         const { name, email, phone, amount } = req.body;
         const tran_id = new ObjectId().toString();
 
-        // Save order as PENDING
+        // Save order
         await orders.insertOne({
           tran_id,
           amount,
@@ -257,6 +310,8 @@ async function run() {
           cancel_url: `${process.env.SERVER_URL}/cancel`,
           ipn_url: `${process.env.SERVER_URL}/ipn`,
 
+          shipping_method: "Courier", // REQUIRED
+
           product_name: "Ecommerce Order",
           product_category: "General",
           product_profile: "general",
@@ -267,17 +322,22 @@ async function run() {
           cus_add1: "Dhaka",
           cus_city: "Dhaka",
           cus_country: "Bangladesh",
+
+          ship_name: name,
+          ship_add1: "Dhaka",
+          ship_city: "Dhaka",
+          ship_country: "Bangladesh",
+          ship_postcode: "1000",
         };
 
         const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
         const response = await sslcz.init(data);
 
-        // 🔥 DEBUG
-        console.log("SSL RAW RESPONSE:", response);
+        // console.log("SSL RAW RESPONSE:", response);
 
         if (!response.GatewayPageURL) {
           return res.status(400).json({
-            error: "SSLCommerz did not return Gateway URL",
+            error: "Gateway URL not received",
             ssl_response: response,
           });
         }
