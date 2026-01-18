@@ -168,7 +168,8 @@ async function run() {
           .skip(Number(skip))
           .toArray();
         // console.log(result);
-        res.send(result);
+        const kidsLength = await kids.countDocuments(query);
+        res.send({result, kidsLength});
       } catch (error) {
         // console.error(error);
         res.status(500).send({ message: "internal server error!" });
