@@ -237,8 +237,7 @@ async function run() {
         const { email } = req.params;
         const query = { userEmail: email };
         const result = await addedCart
-          .find(query)
-          .sort({ addTime: -1 })
+          .findOne(query)
           .toArray();
         res.send(result);
       } catch {
