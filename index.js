@@ -61,6 +61,7 @@ async function run() {
     const discount = fairbazar.collection("discount");
     const feature = fairbazar.collection("feature");
     const banner = fairbazar.collection("banner");
+    const contact = fairbazar.collection("contact");
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
@@ -315,6 +316,27 @@ async function run() {
         res.status(500).send({ message: "internal server erorr!" });
       }
     });
+
+    app.post('/contact', async(req, res ) => {
+      try{
+        const newContact = req.body;
+        newContact.sendTime = new Date();
+        const result = await contact.insertOne(newContact);
+        // console.log(result) insertedId
+        res.send(result);
+      }catch{
+        res.status(500).send({ message: "internal server erorr!" });
+      }
+    });
+
+    app.get('/contacts', async (req ,res) => {
+      try{
+        const result = await contact.find().sort({sendTime: -1}).toArray();
+        res.send(result)
+      }catch{
+        res.status(500).send({ message: "internal server erorr!" })
+      }
+    })
 
     // payment apis
     //sslcommerz init
