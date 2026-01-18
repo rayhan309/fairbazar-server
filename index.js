@@ -152,13 +152,21 @@ async function run() {
     app.get("/kids", async (req, res) => {
       try {
         const { category, limit = 0, page = 0 } = req.query;
+        let skip = 0;
+        if (page > 1) {
+          skip = Number(limit) * Number(page - 1);
+        }
         const query = {};
 
         if (category) {
           query.category = category;
         }
 
-        const result = await kids.find(query).limit(Number(limit)).skip(Number(limit * page)).toArray();
+        const result = await kids
+          .find(query)
+          .limit(Number(limit))
+          .skip(Number(skip))
+          .toArray();
         // console.log(result);
         res.send(result);
       } catch (error) {
