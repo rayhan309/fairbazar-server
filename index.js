@@ -168,10 +168,25 @@ async function run() {
           .skip(Number(skip))
           .toArray();
         // console.log(result);
-        const kidsLength = await kids.countDocuments(query);
-        res.send({result, kidsLength});
+
+        res.send(result);
       } catch (error) {
         // console.error(error);
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get("/kids/length", async (req, res) => {
+      try {
+        const { searchText } = req.query;
+        const query = {};
+
+        if (searchText) {
+          query.title = searchText;
+        }
+        const kidsLength = await kids.countDocuments(query);
+        res.send(kidsLength);
+      } catch {
         res.status(500).send({ message: "internal server error!" });
       }
     });
