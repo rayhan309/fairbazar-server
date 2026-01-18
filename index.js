@@ -60,6 +60,7 @@ async function run() {
     const orders = fairbazar.collection("orders");
     const discount = fairbazar.collection("discount");
     const feature = fairbazar.collection("feature");
+    const banner = fairbazar.collection("banner");
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
@@ -150,14 +151,14 @@ async function run() {
 
     app.get("/kids", async (req, res) => {
       try {
-        const { category } = req.query;
+        const { category, limit = 0, page = 0 } = req.query;
         const query = {};
 
         if (category) {
           query.category = category;
         }
 
-        const result = await kids.find(query).toArray();
+        const result = await kids.find(query).limit(Number(limit)).skip(Number(limit * page)).toArray();
         // console.log(result);
         res.send(result);
       } catch (error) {
@@ -261,6 +262,26 @@ async function run() {
     app.get("/feature", async (req, res) => {
       try {
         const result = await feature.find().sort({ addTime: -1 }).toArray();
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server erorr!" });
+      }
+    });
+
+    app.post("/banner", async (req, res) => {
+      try {
+        const newBanner = req.body;
+        newBanner.addTime = new Date();
+        const result = await banner.insertOne(newBanner);
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
+    app.get("/banner", async (req, res) => {
+      try {
+        const result = await banner.find().sort({ addTime: -1 }).toArray();
         res.send(result);
       } catch {
         res.status(500).send({ message: "internal server erorr!" });
@@ -386,7 +407,6 @@ async function run() {
 
         res.json({
           gatewayURL: response.GatewayPageURL,
-
           tran_id,
         });
       } catch (err) {
@@ -432,10 +452,10 @@ async function run() {
             { tid },
             { $set: { status: "PAID", paidAt: new Date() } },
           );
-          return res.send("<h2>Payment Successful 🎉</h2>");
+          return res.send("Payment Successful 🎉");
         }
 
-        res.send("<h2>Payment Validation Failed</h2>");
+        res.send("Payment Validation Failed");
       } catch (err) {
         console.log(err);
         res.status(500).send("Server Error");
