@@ -178,8 +178,8 @@ async function run() {
 
     app.get("/kids/length", async (req, res) => {
       try {
-        const { searchText } = req.query;
-        const query = {};
+        const { searchText, category } = req.query;
+        const query = {category: category};
 
         if (searchText) {
           query.title = searchText;
