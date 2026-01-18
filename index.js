@@ -179,10 +179,14 @@ async function run() {
     app.get("/kids/length", async (req, res) => {
       try {
         const { searchText, category } = req.query;
-        const query = {category: category};
+        const query = {};
 
         if (searchText) {
           query.title = searchText;
+        }
+
+        if (category) {
+          query.category = category;
         }
         const kidsLength = await kids.countDocuments(query);
         res.send(kidsLength);
