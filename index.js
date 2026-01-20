@@ -317,26 +317,26 @@ async function run() {
       }
     });
 
-    app.post('/contact', async(req, res ) => {
-      try{
+    app.post("/contact", async (req, res) => {
+      try {
         const newContact = req.body;
         newContact.sendTime = new Date();
         const result = await contact.insertOne(newContact);
         // console.log(result) insertedId
         res.send(result);
-      }catch{
+      } catch {
         res.status(500).send({ message: "internal server erorr!" });
       }
     });
 
-    app.get('/contacts', async (req ,res) => {
-      try{
-        const result = await contact.find().sort({sendTime: -1}).toArray();
-        res.send(result)
-      }catch{
-        res.status(500).send({ message: "internal server erorr!" })
+    app.get("/contacts", async (req, res) => {
+      try {
+        const result = await contact.find().sort({ sendTime: -1 }).toArray();
+        res.send(result);
+      } catch {
+        res.status(500).send({ message: "internal server erorr!" });
       }
-    })
+    });
 
     // payment apis
     //sslcommerz init
@@ -400,12 +400,15 @@ async function run() {
 
     app.post("/create-order", async (req, res) => {
       try {
-        const { name, email, phone, amount } = req.body;
+        const { name, email, phone, amount, product_id } = req.body;
         const tran_id = new ObjectId().toString();
 
+        console.log({ name, email, phone, amount, tran_id, product_id });
+
         // Save order
-        await orders.insertOne({
+        const result = await orders.insertOne({
           tran_id,
+          product_id,
           amount,
           currency: "BDT",
           status: "PENDING",
@@ -413,14 +416,16 @@ async function run() {
           createdAt: new Date(),
         });
 
+        // console.log(result);
+
         const data = {
           total_amount: amount,
           currency: "BDT",
           tran_id,
 
-          success_url: `${process.env.CLIENT_URL}/success`,
-          fail_url: `${process.env.CLIENT_URL}/fail`,
-          cancel_url: `${process.env.CLIENT_URL}/cancel`,
+          success_url: `${process.env.SERVER_URL}/success`,
+          fail_url: `${process.env.SERVER_URL}/fail`,
+          cancel_url: `${process.env.SERVER_URL}/cancel`,
           ipn_url: `${process.env.SERVER_URL}/ipn`,
 
           shipping_method: "Courier", // REQUIRED
@@ -465,6 +470,85 @@ async function run() {
       }
     });
 
+    app.post("/init", async (req, res) => {
+      try {
+        const { product_id, customer_email } = req.body;
+
+        const productQuery = { _id: new ObjectId(product_id) };
+        const customerQuery = { email: customer_email };
+        const product = await kids.findOne(productQuery);
+        const customer = await users.findOne(customerQuery);
+
+        // console.log({product, customer});
+
+        const tran_id = new ObjectId().toHexString();
+        // console.log(tran_id);
+
+        const data = {
+          total_amount: product.price,
+          currency: "BDT",
+          tran_id: tran_id, // use unique tran_id for each api call
+          success_url: `http://localhost:4800/success`,
+          fail_url: `http://localhost:4800/fail`,
+          cancel_url: `http://localhost:4800/cancel`,
+          ipn_url: `http://localhost:4800/ipn`,
+          shipping_method: "Courier",
+          product_name: product.title,
+          product_category: product.category,
+          product_profile: "general",
+          cus_name: customer.name,
+          cus_email: customer.email,
+          cus_add1: "Dhaka",
+          cus_add2: "Dhaka",
+          cus_city: "Dhaka",
+          cus_state: "Dhaka",
+          cus_postcode: "1000",
+          cus_country: "Bangladesh",
+          cus_phone: customer.phone,
+          cus_fax: "01711111111",
+          ship_name: customer.name,
+          ship_add1: "Dhaka",
+          ship_add2: "Dhaka",
+          ship_city: "Dhaka",
+          ship_state: "Dhaka",
+          ship_postcode: 1000,
+          ship_country: "Bangladesh",
+        };
+        // const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+
+        // const response = await sslcz.init(data);
+        const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+        console.log("SSL RAW RESPONSE:", sslcz);
+        // sslcz.init(data).then((apiResponse) => {
+        //   // Redirect the user to payment gateway
+        //   // let GatewayPageURL = apiResponse.GatewayPageURL;
+        //   // res.redirect(GatewayPageURL);
+        //   console.log("Redirecting to: ", apiResponse);
+        // });
+
+
+        // if (!response.GatewayPageURL) {
+        //   return res.status(400).json({
+        //     error: "Gateway URL not received",
+        //     ssl_response: response,
+        //   });
+        // }
+
+        // sslcz.init(data).then((apiResponse) => {
+        //   // Redirect the user to payment gateway
+        //   let GatewayPageURL = apiResponse.GatewayPageURL;
+        //   // res.redirect(GatewayPageURL);
+        //   console.log("Redirecting to: ", GatewayPageURL);
+        // }).catch(err => {
+        //   console.log(err)
+        // });
+
+        res.send({ message: " success" });
+      } catch {
+        res.status(500).send({ message: "internal server error!" });
+      }
+    });
+
     // ==========================
     // PAYMENT VALIDATION
     // ==========================
@@ -485,30 +569,41 @@ async function run() {
       return response.data;
     }
 
+    // dfhdf
+
     // ==========================
     // SUCCESS
     // ==========================
     app.post("/success", async (req, res) => {
+      console.log("sjdfhsdjfskdjfhsd");
       try {
-        const { valId, tid } = req.body;
+        const { val_id, tran_id } = req.query;
 
-        const validation = await validatePayment(valId);
+        console.log("PAYMENT SUCCESS:", tran_id, val_id);
 
-        // const db = await connectDB();
-        // const orders = db.collection("orders");
+        if (!val_id || !tran_id) {
+          return res.redirect(`${process.env.CLIENT_URL}/payment-fail`);
+        }
+
+        const validation = await validatePayment(val_id);
+
+        console.log(validation);
 
         if (validation.status === "VALID") {
           await orders.updateOne(
-            { tid },
+            { tran_id },
             { $set: { status: "PAID", paidAt: new Date() } },
           );
-          return res.send("Payment Successful 🎉");
+
+          return res.redirect(
+            `${process.env.CLIENT_URL}/payment-success?tran_id=${tran_id}&val_id=${val_id}`,
+          );
         }
 
-        res.send("Payment Validation Failed");
+        res.redirect(`${process.env.CLIENT_URL}/payment-fail`);
       } catch (err) {
-        console.log(err);
-        res.status(500).send("Server Error");
+        console.log("SUCCESS ERROR:", err);
+        res.redirect(`${process.env.CLIENT_URL}/payment-fail`);
       }
     });
 
@@ -561,10 +656,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!",
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
