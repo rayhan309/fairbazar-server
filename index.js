@@ -332,13 +332,19 @@ async function run() {
 
     app.get("/contacts", async (req, res) => {
       try {
+        const limit = parseInt(req.query.limit) || 9;
+        const page = parseInt(req.query.page) || 1;
+        const skip = (page - 1) * limit;
         const result = await contact
           .find({ status: "pending" })
           .sort({ sendTime: -1 })
+          .skip(skip)
+          .limit(limit)
           .toArray();
+
         res.send(result);
-      } catch {
-        res.status(500).send({ message: "internal server erorr!" });
+      } catch (error) {
+        res.status(500).send({ message: "internal server error!" });
       }
     });
 
@@ -526,21 +532,92 @@ async function run() {
       }
     });
 
+    // app.get("/orders", async (req, res) => {
+    //   try {
+    //     const result = await orders.find().toArray();
+    //     res.send(result);
+    //   } catch (err) {
+    //     console.log(err);
+    //     res.status(500).send({ message: "internal server error!" });
+    //   }
+    // });
+    // cash on Delivery
+    app.post("/order-cod", async (req, res) => {
+      try {
+        const { productId, userEmail, ...shippingInfo } = req.body;
+        // const productQuery = {
+        //   _id:new ObjectId(productId),
+        // };
+        console.log(productId);
+        const orderedProducts = await kids.findOne({
+          _id: new ObjectId(productId),
+        });
+        console.log(orderedProducts);
+
+        const customerDetail = await users.findOne({ email: userEmail });
+        const newOrder = {
+          ...shippingInfo,
+          orderedItems: { ...orderedProducts, status: "pending" },
+          customer: {
+            userId: customerDetail?._id,
+            name: customerDetail?.name,
+            email: customerDetail?.email,
+          },
+          payment_type: "COD",
+
+          orderDate: new Date(),
+        };
+        const result = await orders.insertOne(newOrder);
+        // console.log(orderedProducts)
+        // if (result.insertedId) {
+        //   await addedCart.deleteMany({ userEmail: userEmail });
+        // }
+
+        res.send({
+          success: true,
+          message: "Order placed successfully and cart cleared!",
+        });
+      } catch (error) {
+        console.error("COD Error :", error);
+        res
+          .status(500)
+          .send({ success: false, message: "Internal server error!" });
+      }
+    });
     app.get("/orders", async (req, res) => {
       try {
-        const result = await orders.find().toArray();
+        const result = await orders.find().sort({ orderDate: -1 }).toArray();
         res.send(result);
       } catch (err) {
+        console.error("Get Orders Error:", err);
+        res.status(500).send({ message: "Internal server error!" });
+      }
+    });
+    app.patch("/orders/:id", async (req, res) => {
+      try {
+        const { status } = req.body;
+        const id = req.params.id;
+
+        const result = await orders.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              "orderedItems.status": status,
+            },
+          },
+        );
+        res.send({ success: true, message: "order status update", result });
+      } catch (err) {
         console.log(err);
-        res.status(500).send({ message: "internal server error!" });
+        res.status(500).send({ message: "Internal server error" });
       }
     });
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!",
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
