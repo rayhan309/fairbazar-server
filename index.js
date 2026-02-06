@@ -1,4 +1,5 @@
 const express = require("express");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -101,6 +102,56 @@ async function run() {
     // const uri = "mongodb+srv://fairebazar:lP5WdsPcCv7gR0gZ@cluster0.ko5whro.mongodb.net/?appName=Cluster0";
 
     // console.log("✅ MongoDB connected successfully!");
+
+    // configaretion of send email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    // ২. Api of aprove and send email
+    app.patch("/contact/approve/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { email, name, message } = req.body; // ফ্রন্টএন্ড থেকে পাঠানো মেসেজ
+
+        // ১. ডাটাবেজে স্ট্যাটাস আপডেট
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = { $set: { status: "Done" } };
+        await contact.updateOne(filter, updateDoc);
+
+        // ২. ইমেইল পাঠানোর কনফিগারেশন
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Response to your question - Fair Bazar",
+          html: `
+            <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px;">
+              <h2 style="color: #4CAF50;">Hello ${name},</h2>
+              <p>Your question has been reviewed by our team.</p>
+              <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
+                <strong>Message from Admin:</strong><br/>
+                ${message}
+              </div>
+              <p>Thank you for reaching out to us!</p>
+              <hr/>
+              <p style="font-size: 12px; color: #888;">This is an automated email from Fair Bazar.</p>
+            </div>
+          `,
+        };
+
+        // ৩. ইমেইল পাঠানো
+        await transporter.sendMail(mailOptions);
+        res.send({ success: true, message: "Approved and Email Sent!" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to approve or send email" });
+      }
+    });
+
+
 
     app.post("/user", async (req, res) => {
       try {
@@ -278,7 +329,7 @@ async function run() {
       }
     });
 
-    app.post("/feature", async (req, res) => {
+    app.post("/featured", async (req, res) => {
       try {
         const newDiscount = req.body;
         newDiscount.addTime = new Date();
@@ -289,7 +340,7 @@ async function run() {
       }
     });
 
-    app.get("/feature", async (req, res) => {
+    app.get("/featured", async (req, res) => {
       try {
         const result = await feature.find().sort({ addTime: -1 }).toArray();
         res.send(result);
