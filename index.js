@@ -151,8 +151,6 @@ async function run() {
       }
     });
 
-
-
     app.post("/user", async (req, res) => {
       try {
         const newUser = req.body;
@@ -592,6 +590,7 @@ async function run() {
     //     res.status(500).send({ message: "internal server error!" });
     //   }
     // });
+
     // cash on Delivery
     app.post("/order-cod", async (req, res) => {
       try {
@@ -603,7 +602,7 @@ async function run() {
         const orderedProducts = await kids.findOne({
           _id: new ObjectId(productId),
         });
-        console.log(orderedProducts);
+        // console.log(orderedProducts);
 
         const customerDetail = await users.findOne({ email: userEmail });
         const newOrder = {
@@ -635,15 +634,40 @@ async function run() {
           .send({ success: false, message: "Internal server error!" });
       }
     });
+
+    app.get("/orders-counts", async (req, res) => {
+      try {
+        const totalOrders = await orders.countDocuments();
+        res.status(200).send(totalOrders);
+      } catch (error) {
+        res.status(500).send({
+          message: "Internal server error",
+          error: error.message,
+        });
+      }
+    });
+
+    app.get("/orders-amount", async (req, res) => {
+      try {
+        const total_amount = await orders
+          .find({}, { projection: { "orderedItems.price": 1, _id: 0 } })
+          .toArray();
+        res.status(200).send(total_amount);
+      } catch {
+        res.status(500).send({ message: "internal server error" });
+      }
+    });
+
     app.get("/orders", async (req, res) => {
       try {
         const result = await orders.find().sort({ orderDate: -1 }).toArray();
         res.send(result);
       } catch (err) {
-        console.error("Get Orders Error:", err);
+        // console.error("Get Orders Error:", err);
         res.status(500).send({ message: "Internal server error!" });
       }
     });
+
     app.patch("/orders/:id", async (req, res) => {
       try {
         const { status } = req.body;
@@ -665,10 +689,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
