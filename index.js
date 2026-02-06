@@ -129,7 +129,7 @@ async function run() {
           subject: "Response to your question - Fair Bazar",
           html: `
             <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px;">
-              <h2 style="color: #4CAF50;">Hello ${name},</h2>
+              <h2 style="color: #4CAF50;">HellO ${name},</h2>
               <p>Your question has been reviewed by our team.</p>
               <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
                 <strong>Message from Admin:</strong><br/>
