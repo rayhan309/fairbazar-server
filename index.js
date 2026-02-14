@@ -646,7 +646,7 @@ async function run() {
             name: customerDetail?.name,
             email: customerDetail?.email,
           },
-          payment_type: "COD",
+          payment_type: "COD", 
 
           orderDate: new Date(),
         };
