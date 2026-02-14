@@ -201,12 +201,15 @@ async function run() {
 
     app.get("/kids", async (req, res) => {
       try {
-        const { category, limit = 0, page = 0 } = req.query;
+        const { category, limit = 0, page = 0 ,search = "" } = req.query;
         let skip = 0;
         if (page > 1) {
           skip = Number(limit) * Number(page - 1);
         }
         const query = {};
+        if (search) {
+          query.title = { $regex: search, $options: "i" }; // "i" মানে case-insensitive
+        }
 
         if (category) {
           query.category = category;
