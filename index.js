@@ -337,6 +337,20 @@ async function run() {
       }
     });
 
+    app.get('/discount/:id', async (req, res) => {
+      try{
+        const {id} = req.params;
+         
+        // console.log(id, 'id')
+        const query = {_id: new ObjectId(id)}
+        const result = await discount.findOne(query);
+
+        res.status(200).send(result)
+      }catch{
+        res.status(500).send({ message: "internal server erorr!" });
+      }
+    })
+
     app.post("/featured", async (req, res) => {
       try {
         const newDiscount = req.body;
@@ -608,10 +622,19 @@ async function run() {
         // const productQuery = {
         //   _id:new ObjectId(productId),
         // };
-        console.log(productId);
-        const orderedProducts = await kids.findOne({
+        // console.log(productId);
+        let orderedProducts = await kids.findOne({
           _id: new ObjectId(productId),
         });
+
+        if(!orderedProducts) {
+          orderedProducts = await discount.findOne({_id: new ObjectId(productId)})
+        }
+
+        if(!orderedProducts) {
+          orderedProducts = await feature.findOne({_id: new ObjectId(productId)})
+        }
+
         // console.log(orderedProducts);
 
         const customerDetail = await users.findOne({ email: userEmail });
