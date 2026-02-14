@@ -64,6 +64,8 @@ async function run() {
     const banner = fairbazar.collection("banner");
     const contact = fairbazar.collection("contact");
 
+    
+
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
     //   const email = req.user_email;
