@@ -125,22 +125,62 @@ async function run() {
 
         // ২. ইমেইল পাঠানোর কনফিগারেশন
         const mailOptions = {
-          from: process.env.EMAIL_USER,
+          from: `"Fair Bazar Support" <${process.env.EMAIL_USER}>`,
           to: email,
-          subject: "Response to your question - Fair Bazar",
+          subject: "Response to your inquiry - Fair Bazar",
           html: `
-            <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px;">
-              <h2 style="color: #4CAF50;">HellO ${name},</h2>
-              <p>Your question has been reviewed by our team.</p>
-              <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
-                <strong>Message from Admin:</strong><br/>
-                ${message}
-              </div>
-              <p>Thank you for reaching out to us!</p>
-              <hr/>
-              <p style="font-size: 12px; color: #888;">This is an automated email from Fair Bazar.</p>
+    <div style="background-color: #f4f4f4; padding: 40px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        
+      <div style="background-color: #f97316; padding: 25px; text-align: center;">
+          <a href="https://fairbazar.vercel.app/" target="_blank" style="text-decoration: none;">
+            <img 
+              src="https://i.ibb.co.com/QvDv4ZZS/logo2.png" 
+              alt="Fair Bazar" 
+              style="max-width: 150px; height: auto; display: block; margin: 0 auto;"
+            />
+            <h1 style="color: #ffffff; margin-top: 10px; margin-bottom: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">
+              Fair Bazar
+            </h1>
+          </a>
+        </div>
+
+        <div style="padding: 40px; color: #333333; line-height: 1.6;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Hello ${name},</h2>
+          <p style="font-size: 16px; color: #555555;">
+            Thank you for reaching out to us. Our support team has carefully reviewed your question, and we have an update for you.
+          </p>
+          
+          <div style="background-color: #fffaf0; border-left: 5px solid #f97316; padding: 25px; margin: 30px 0; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #f97316; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+              Message from Admin:
+            </p>
+            <div style="font-size: 16px; color: #2d3436; font-style: italic;">
+              "${message}"
             </div>
-          `,
+          </div>
+
+          <p style="font-size: 16px;">
+            If you have any further questions or need more assistance, feel free to reply to this email or visit our website.
+          </p>
+          
+          <a href="https://fairbazar.vercel.app/" style="display: inline-block; background-color: #f97316; color: #ffffff; padding: 14px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; margin-top: 20px;">
+            Visit Fair Bazar
+          </a>
+        </div>
+
+        <div style="background-color: #fafafa; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+          <p style="font-size: 12px; color: #999999; margin: 0;">
+            &copy; 2026 Fair Bazar Inc. All rights reserved. <br/>
+            This is an automated notification. Please do not reply directly to this message.
+          </p>
+          <div style="margin-top: 10px;">
+             <small style="color: #f97316; font-weight: bold;">Shop Smart. Shop Fair.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    `,
         };
 
         // ৩. ইমেইল পাঠানো
