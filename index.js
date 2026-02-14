@@ -155,7 +155,14 @@ async function run() {
       try {
         const newUser = req.body;
         newUser.addTime = new Date();
-        const result = await users.insertOne(newUser);
+
+        const query = {email: newUser?.email}
+        const isExgest = await users.findOne(query);
+        // console.log(isExgest, 'isExgest')
+        if(isExgest) return res.send({message: 'this user alrady ex'})
+          
+          const result = await users.insertOne(newUser);
+          // console.log(result, 'userrs')
         res.send(result);
       } catch (error) {
         // console.error(error);
