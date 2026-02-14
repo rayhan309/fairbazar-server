@@ -111,6 +111,7 @@ async function run() {
         pass: process.env.EMAIL_PASS,
       },
     });
+    // console.log({email: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS})
     // ২. Api of aprove and send email
     app.patch("/contact/approve/:id", async (req, res) => {
       try {
@@ -156,13 +157,13 @@ async function run() {
         const newUser = req.body;
         newUser.addTime = new Date();
 
-        const query = {email: newUser?.email}
+        const query = { email: newUser?.email }
         const isExgest = await users.findOne(query);
         // console.log(isExgest, 'isExgest')
-        if(isExgest) return res.send({message: 'this user alrady ex'})
-          
-          const result = await users.insertOne(newUser);
-          // console.log(result, 'userrs')
+        if (isExgest) return res.send({ message: 'this user alrady ex' })
+
+        const result = await users.insertOne(newUser);
+        // console.log(result, 'userrs')
         res.send(result);
       } catch (error) {
         // console.error(error);
@@ -208,7 +209,7 @@ async function run() {
 
     app.get("/kids", async (req, res) => {
       try {
-        const { category, limit = 0, page = 0 ,search = "" } = req.query;
+        const { category, limit = 0, page = 0, search = "" } = req.query;
         let skip = 0;
         if (page > 1) {
           skip = Number(limit) * Number(page - 1);
@@ -239,19 +240,27 @@ async function run() {
 
     app.get("/kids/length", async (req, res) => {
       try {
-        const { searchText, category } = req.query;
+        // ১. ডেসট্রাকচারিং এ search ব্যবহার করা হয়েছে
+        const { search, category } = req.query;
         const query = {};
 
-        if (searchText) {
-          query.title = searchText;
+        // ২. চেক করতে হবে 'search' ভেরিয়েবলটি (searchText নয়)
+        if (search) {
+          // ৩. টাইটেল সার্চ করার জন্য regex ব্যবহার করা ভালো যাতে আংশিক মিল থাকলেও খুঁজে পায়
+          query.title = { $regex: search, $options: "i" };
         }
 
         if (category) {
           query.category = category;
         }
+
         const kidsLength = await kids.countDocuments(query);
+
+        // ৪. সংখ্যাটি একটি অবজেক্ট আকারে পাঠানো ভালো প্র্যাকটিস
         res.send(kidsLength);
-      } catch {
+
+      } catch (error) {
+        console.error("Length Error:", error);
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -336,6 +345,20 @@ async function run() {
         res.status(500).send({ message: "internal server erorr!" });
       }
     });
+
+    app.get('/discount/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        // console.log(id, 'id')
+        const query = { _id: new ObjectId(id) }
+        const result = await discount.findOne(query);
+
+        res.status(200).send(result)
+      } catch {
+        res.status(500).send({ message: "internal server erorr!" });
+      }
+    })
 
     app.post("/featured", async (req, res) => {
       try {
@@ -608,10 +631,19 @@ async function run() {
         // const productQuery = {
         //   _id:new ObjectId(productId),
         // };
-        console.log(productId);
-        const orderedProducts = await kids.findOne({
+        // console.log(productId);
+        let orderedProducts = await kids.findOne({
           _id: new ObjectId(productId),
         });
+
+        if (!orderedProducts) {
+          orderedProducts = await discount.findOne({ _id: new ObjectId(productId) })
+        }
+
+        if (!orderedProducts) {
+          orderedProducts = await feature.findOne({ _id: new ObjectId(productId) })
+        }
+
         // console.log(orderedProducts);
 
         const customerDetail = await users.findOne({ email: userEmail });
