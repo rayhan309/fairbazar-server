@@ -343,13 +343,21 @@ async function run() {
     app.get("/addCart/:email", async (req, res) => {
       try {
         const { email } = req.params;
-        const query = { userEmail: email };
+        const { search = "" } = req.query; // ক্লায়েন্ট থেকে আসা সার্চ টেক্সট
+
+        // কুয়েরি অবজেক্ট তৈরি
+        const query = {
+          userEmail: email,
+          kidsName: { $regex: search, $options: "i" }, // 'kidsName' ফিল্ডে সার্চ করবে
+        };
+
         const result = await addedCart
-          .find(query)
+          .find(query) // এখানে query পাস করতে হবে
           .sort({ addTime: -1 })
           .toArray();
+
         res.send(result);
-      } catch {
+      } catch (error) {
         res.status(500).send({ message: "internal server error!" });
       }
     });
@@ -378,27 +386,34 @@ async function run() {
 
     app.get("/discount", async (req, res) => {
       try {
-        const {limit = 0, page = 0, search = ""} = req.query;
-
-        // console.log(query, 'query')
+        const { limit = 10, page = 1, search = "" } = req.query;
 
         let skip = 0;
-
         if (page > 1) {
-          skip = Number(limit) * Number(page - 1);
+          skip = Number(limit) * (Number(page) - 1);
         }
+
         const query = {};
-
         if (search) {
-          query.title = { $regex: search, $options: "i" }; // "i" মানে case-insensitive
+          query.title = { $regex: search, $options: "i" };
         }
 
-        const result = await discount.find().sort({ addTime: -1 }).limit(Number(limit)).skip(Number(skip)).toArray();
+        // ডাটা কুয়েরি (এখানে .find(query) দিতে ভুলবেন না)
+        const result = await discount
+          .find(query) // query অবজেক্টটি এখানে পাস করতে হবে
+          .sort({ addTime: -1 })
+          .limit(Number(limit))
+          .skip(Number(skip))
+          .toArray();
 
-        res.send(result);
+        // মোট প্রোডাক্ট সংখ্যা বের করা (সার্চ অনুযায়ী)
+        const totalCount = await discount.countDocuments(query);
+
+        // অবজেক্ট আকারে ডাটা পাঠানো
+        res.send({ result, totalCount });
       } catch (error) {
-        console.log(error)
-        res.status(500).send({ message: "internal server erorr!" });
+        console.log(error);
+        res.status(500).send({ message: "internal server error!" });
       }
     });
 
