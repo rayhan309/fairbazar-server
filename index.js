@@ -386,7 +386,9 @@ async function run() {
 
     app.get("/discount", async (req, res) => {
       try {
-        const { limit = 10, page = 1, search = "" } = req.query;
+        const { limit = 0, page = 0, search = "" } = req.query;
+
+        // console.log(query, 'query')
 
         let skip = 0;
         if (page > 1) {
@@ -698,7 +700,12 @@ async function run() {
     // cash on Delivery
     app.post("/order-cod", async (req, res) => {
       try {
-        const { productId, userEmail, ...shippingInfo } = req.body;
+        const { cradItemID, productId, userEmail, ...shippingInfo } = req.body;
+        
+        if(!cradItemID) return res.status(200).send({message: 'inter nal server error!'})
+        
+        console.log(cradItemID, 'cradItemID')
+
         // const productQuery = {
         //   _id:new ObjectId(productId),
         // };
@@ -722,6 +729,7 @@ async function run() {
         // console.log(orderedProducts);
 
         const customerDetail = await users.findOne({ email: userEmail });
+
         const newOrder = {
           ...shippingInfo,
           orderedItems: { ...orderedProducts, status: "pending" },
@@ -734,7 +742,18 @@ async function run() {
 
           orderDate: new Date(),
         };
+
         const result = await orders.insertOne(newOrder);
+
+
+        if (result?.insertedId) {
+          const deleteQuery = {_id: new ObjectId(cradItemID)}
+          const res = await addedCart.deleteOne(deleteQuery);
+          
+          // console.log({ res })
+          // console.log({ result })
+        }
+
         // console.log(orderedProducts)
         // if (result.insertedId) {
         //   await addedCart.deleteMany({ userEmail: userEmail });
@@ -861,6 +880,9 @@ async function run() {
             },
           },
         );
+
+        // console.log(result);
+
         res.send({ success: true, message: "order status update", result });
       } catch (err) {
         console.log(err);
