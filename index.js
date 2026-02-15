@@ -64,8 +64,6 @@ async function run() {
     const banner = fairbazar.collection("banner");
     const contact = fairbazar.collection("contact");
 
-    
-
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
     //   const email = req.user_email;
@@ -199,10 +197,10 @@ async function run() {
         const newUser = req.body;
         newUser.addTime = new Date();
 
-        const query = { email: newUser?.email }
+        const query = { email: newUser?.email };
         const isExgest = await users.findOne(query);
         // console.log(isExgest, 'isExgest')
-        if (isExgest) return res.send({ message: 'this user alrady ex' })
+        if (isExgest) return res.send({ message: "this user alrady ex" });
 
         const result = await users.insertOne(newUser);
         // console.log(result, 'userrs')
@@ -300,7 +298,6 @@ async function run() {
 
         // ৪. সংখ্যাটি একটি অবজেক্ট আকারে পাঠানো ভালো প্র্যাকটিস
         res.send(kidsLength);
-
       } catch (error) {
         console.error("Length Error:", error);
         res.status(500).send({ message: "internal server error!" });
@@ -388,19 +385,19 @@ async function run() {
       }
     });
 
-    app.get('/discount/:id', async (req, res) => {
+    app.get("/discount/:id", async (req, res) => {
       try {
         const { id } = req.params;
 
         // console.log(id, 'id')
-        const query = { _id: new ObjectId(id) }
+        const query = { _id: new ObjectId(id) };
         const result = await discount.findOne(query);
 
-        res.status(200).send(result)
+        res.status(200).send(result);
       } catch {
         res.status(500).send({ message: "internal server erorr!" });
       }
-    })
+    });
 
     app.post("/featured", async (req, res) => {
       try {
@@ -679,11 +676,15 @@ async function run() {
         });
 
         if (!orderedProducts) {
-          orderedProducts = await discount.findOne({ _id: new ObjectId(productId) })
+          orderedProducts = await discount.findOne({
+            _id: new ObjectId(productId),
+          });
         }
 
         if (!orderedProducts) {
-          orderedProducts = await feature.findOne({ _id: new ObjectId(productId) })
+          orderedProducts = await feature.findOne({
+            _id: new ObjectId(productId),
+          });
         }
 
         // console.log(orderedProducts);
@@ -744,36 +745,73 @@ async function run() {
 
     app.get("/orders", async (req, res) => {
       try {
-        const result = await orders.find().sort({ orderDate: -1 }).toArray();
+        const searchTerm = req.query.search;
+        const statusFilter = req.query.status;
+
+        let query = {};
+
+        // স্ট্যাটাস ফিল্টার
+        if (statusFilter && statusFilter !== "all") {
+          query["orderedItems.status"] = statusFilter;
+        }
+
+        // সার্চ ফিল্টার (নাম বা ফোনের ওপর ভিত্তি করে)
+        if (searchTerm) {
+          query.$or = [
+            { fullName: { $regex: searchTerm, $options: "i" } },
+            { phone: { $regex: searchTerm, $options: "i" } },
+            { "orderedItems.title": { $regex: searchTerm, $options: "i" } },
+          ];
+        }
+
+        const result = await orders
+          .find(query)
+          .sort({ "customer.orderDate": -1 })
+          .toArray();
         res.send(result);
       } catch (err) {
-        // console.error("Get Orders Error:", err);
         res.status(500).send({ message: "Internal server error!" });
       }
     });
-
-    app.get('/myOrders', async (req, res) => {
-      try{
+    // My Orders Fetching API (Updated)
+    app.get("/myOrders", async (req, res) => {
+      try {
         const email = req.query.email;
+        const searchTerm = req.query.search; // ফ্রন্টএন্ড থেকে আসা সার্চ টার্ম
+        const statusFilter = req.query.status; // ফ্রন্টএন্ড থেকে আসা স্ট্যাটাস
 
-        // console.log(email, 'rayhan')
-
-        if(!email) {
-          return res.status(400).send({message: 'email is requered!'})
+        if (!email) {
+          return res.status(400).send({ message: "Email is required!" });
         }
 
-        const query = {'customer.email': email}
+        // ১. বেসিক কুয়েরি: নির্দিষ্ট ইউজারের ইমেইল অনুযায়ী
+        let query = { "customer.email": email };
 
-        // console.log(query)
+        // ২. স্ট্যাটাস ফিল্টার যোগ করা (যদি 'all' না হয়)
+        if (statusFilter && statusFilter !== "all") {
+          query["orderedItems.status"] = statusFilter;
+        }
 
-        const result = await orders.find(query).sort({ orderDate: -1 }).toArray();
-        const ordersLength = await orders.countDocuments(query)
+        // ৩. ডাইনামিক সার্চ ফিল্টার (Product Title অনুযায়ী)
+        if (searchTerm) {
+          query["orderedItems.title"] = {
+            $regex: searchTerm,
+            $options: "i", // 'i' মানে Case-insensitive (বড়হাত/ছোটহাত অক্ষরে সমস্যা হবে না)
+          };
+        }
 
-        // console.log(ordersLength, 'result')
+        // ডাটাবেস থেকে ডাটা আনা (লেটেস্ট অর্ডার আগে দেখাবে)
+        const result = await orders
+          .find(query)
+          .sort({ "customer.orderDate": -1 })
+          .toArray();
 
-        res.status(200).send({result, ordersLength})
-      }catch (error) {
-        console.error("Error fetching orders:", error);
+        // ফিল্টার করা ডাটার মোট সংখ্যা
+        const ordersLength = await orders.countDocuments(query);
+
+        res.status(200).send({ result, ordersLength });
+      } catch (error) {
+        console.error("Error fetching my orders:", error);
         res.status(500).send({ message: "Internal server error!" });
       }
     });
