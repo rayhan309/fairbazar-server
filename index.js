@@ -381,9 +381,26 @@ async function run() {
 
     app.get("/discount", async (req, res) => {
       try {
-        const result = await discount.find().sort({ addTime: -1 }).toArray();
+        const {limit = 0, page = 0, search = ""} = req.query;
+
+        // console.log(query, 'query')
+
+        let skip = 0;
+
+        if (page > 1) {
+          skip = Number(limit) * Number(page - 1);
+        }
+        const query = {};
+
+        if (search) {
+          query.title = { $regex: search, $options: "i" }; // "i" মানে case-insensitive
+        }
+
+        const result = await discount.find().sort({ addTime: -1 }).limit(Number(limit)).skip(Number(skip)).toArray();
+
         res.send(result);
-      } catch {
+      } catch (error) {
+        console.log(error)
         res.status(500).send({ message: "internal server erorr!" });
       }
     });
