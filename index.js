@@ -752,6 +752,32 @@ async function run() {
       }
     });
 
+    app.get('/myOrders', async (req, res) => {
+      try{
+        const email = req.query.email;
+
+        // console.log(email, 'rayhan')
+
+        if(!email) {
+          return res.status(400).send({message: 'email is requered!'})
+        }
+
+        const query = {'customer.email': email}
+
+        // console.log(query)
+
+        const result = await orders.find(query).sort({ orderDate: -1 }).toArray();
+        const ordersLength = await orders.countDocuments(query)
+
+        // console.log(ordersLength, 'result')
+
+        res.status(200).send({result, ordersLength})
+      }catch (error) {
+        console.error("Error fetching orders:", error);
+        res.status(500).send({ message: "Internal server error!" });
+      }
+    });
+
     app.patch("/orders/:id", async (req, res) => {
       try {
         const { status } = req.body;
