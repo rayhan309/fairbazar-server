@@ -394,8 +394,9 @@ async function run() {
         }
 
         const result = await discount.find().sort({ addTime: -1 }).limit(Number(limit)).skip(Number(skip)).toArray();
+        const totalCount = await discount.countDocuments(query)
 
-        res.send(result);
+        res.send({ result, totalCount });
       } catch (error) {
         console.log(error)
         res.status(500).send({ message: "internal server erorr!" });
@@ -684,10 +685,12 @@ async function run() {
     app.post("/order-cod", async (req, res) => {
       try {
         const { cradItemID, productId, userEmail, ...shippingInfo } = req.body;
-        
-        if(!cradItemID) return res.status(200).send({message: 'inter nal server error!'})
-        
-        console.log(cradItemID, 'cradItemID')
+
+
+        // console.log(cradItemID, 'cradItemID')
+        // if(!cradItemID) return res.status(400).send({message: 'inter nal server error!'})
+
+        // console.log(cradItemID, 'cradItemID')
 
         // const productQuery = {
         //   _id:new ObjectId(productId),
@@ -730,11 +733,15 @@ async function run() {
 
 
         if (result?.insertedId) {
-          const deleteQuery = {_id: new ObjectId(cradItemID)}
-          const res = await addedCart.deleteOne(deleteQuery);
-          
-          // console.log({ res })
-          // console.log({ result })
+          if (cradItemID) {
+            const deleteQuery = { _id: new ObjectId(cradItemID) }
+            const res = await addedCart.deleteOne(deleteQuery);
+
+            console.log({ res })
+          } else {
+
+            console.log({ result })
+          }
         }
 
         // console.log(orderedProducts)
@@ -852,8 +859,12 @@ async function run() {
 
     app.patch("/orders/:id", async (req, res) => {
       try {
-        const { status } = req.body;
+        const { status, productId } = req.body;
         const id = req.params.id;
+
+        // const updatedQuery = {
+
+        // }
 
         const result = await orders.updateOne(
           { _id: new ObjectId(id) },
@@ -861,12 +872,35 @@ async function run() {
             $set: {
               "orderedItems.status": status,
             },
-          },
+          }
         );
+
+        // console.log({result})
+
+        if (status == 'approved' && result?.modifiedCount && productId) {
+
+          const productQuery = { _id: new ObjectId(productId) }
+          console.log(productQuery)
+
+          let productResult = await kids.updateOne(productQuery, { $inc: { stock: -1 } });
+          console.log(productResult)
+
+          if(!productResult) {
+            productResult = await discount.findOne(productQuery, { $inc: { stock: -1 } });
+            console.log({productResult}, 'productResult discount colllectio')
+          }
+
+          // const productResult_2 = productResult || ;
+
+          // console.log({ productResult })
+
+        }
 
         // console.log(result);
 
-        res.send({ success: true, message: "order status update", result });
+
+
+        res.send({ success: true, message: "order status update" });
       } catch (err) {
         console.log(err);
         res.status(500).send({ message: "Internal server error" });
