@@ -860,7 +860,7 @@ async function run() {
         // ডাটাবেস থেকে ডাটা আনা (লেটেস্ট অর্ডার আগে দেখাবে)
         const result = await orders
           .find(query)
-          .sort({ "customer.orderDate": -1 })
+          .sort({ orderDate: -1 })
           .toArray();
 
         // ফিল্টার করা ডাটার মোট সংখ্যা
