@@ -63,6 +63,7 @@ async function run() {
     const feature = fairbazar.collection("feature");
     const banner = fairbazar.collection("banner");
     const contact = fairbazar.collection("contact");
+    const feedbacks = fairbazar.collection('feedbacks');
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
@@ -936,6 +937,29 @@ async function run() {
         res.status(500).send({ message: "Internal server error" });
       }
     });
+
+    // customers feedbacks
+    app.post('/feedback', async (req, res) => {
+      try{
+        const newFeedback = req?.body;
+        newFeedback?.addTime = new Date();
+        const result  = await feedbacks.insertOne(newFeedback);
+        res.status(200).send(result)
+      }catch(error) {
+        console.log(error);
+        res.status(500).send({message: 'internal server error!'})
+      }
+    });
+
+    app.get('/feedback', async (req, res) => {
+      try{
+        const result = await feedbacks.find().toArray();
+        res.status(200).send(result);
+      }catch(error){
+        console.log(error);
+        res.status(500).send('internal servber error!')
+      }
+    })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
