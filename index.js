@@ -1,3 +1,5 @@
+
+
 const express = require("express");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
@@ -255,7 +257,7 @@ async function run() {
         if (page > 1) {
           skip = Number(limit) * Number(page - 1);
         }
-        const query = {};
+        const query = {stock: { $gt: 0 }};
         if (search) {
           query.title = { $regex: search, $options: "i" }; // "i" মানে case-insensitive
         }
@@ -396,7 +398,7 @@ async function run() {
           skip = Number(limit) * (Number(page) - 1);
         }
 
-        const query = {};
+        const query = {stock: { $gt: 0 }};
         if (search) {
           query.title = { $regex: search, $options: "i" };
         }
