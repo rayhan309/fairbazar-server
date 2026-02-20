@@ -942,7 +942,7 @@ async function run() {
     app.post('/feedback', async (req, res) => {
       try{
         const newFeedback = req?.body;
-        newFeedback?.addTime = new Date();
+        newFeedback.addTime = new Date();
         const result  = await feedbacks.insertOne(newFeedback);
         res.status(200).send(result)
       }catch(error) {
