@@ -708,6 +708,20 @@ async function run() {
 
         // console.log(cradItemID, 'cradItemID')
 
+        const generateTrackingId = () => {
+          // ১. প্রিফিক্স (আপনার ব্র্যান্ডের নাম)
+          const prefix = "FB";
+
+          // ২. বর্তমান তারিখ (YYYYMMDD ফরম্যাটে)
+          const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+          // ৩. ৫ ডিজিটের একটি র‍্যান্ডম ইউনিক স্ট্রিং
+          const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+
+          // ৪. সব মিলিয়ে আইডি তৈরি
+          return `${prefix}-${date}-${randomStr}`;
+        };
+
         // const productQuery = {
         //   _id:new ObjectId(productId),
         // };
@@ -741,7 +755,7 @@ async function run() {
             email: customerDetail?.email,
           },
           payment_type: "COD",
-
+          track_id: generateTrackingId(),
           orderDate: new Date(),
         };
 
@@ -901,9 +915,9 @@ async function run() {
           let productResult = await kids.updateOne(productQuery, { $inc: { stock: -1 } });
           console.log(productResult)
 
-          if(!productResult) {
+          if (!productResult) {
             productResult = await discount.findOne(productQuery, { $inc: { stock: -1 } });
-            console.log({productResult}, 'productResult discount colllectio')
+            console.log({ productResult }, 'productResult discount colllectio')
           }
 
           // const productResult_2 = productResult || ;
