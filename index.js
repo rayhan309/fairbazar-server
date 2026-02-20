@@ -837,7 +837,7 @@ async function run() {
 
         const result = await orders
           .find(query)
-          .sort({ "customer.orderDate": -1 })
+          .sort({ orderDate: -1 })
           .toArray();
         res.send(result);
       } catch (err) {
