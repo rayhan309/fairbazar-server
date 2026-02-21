@@ -100,12 +100,12 @@ async function run() {
 
     // hr & emploey check
     // const verifyUser = async (req, res, next) => {
-    //   const email = req.user_email;
+    //   const email = req.current_user;
 
     //   if (email) {
     //     const query = { email: email };
     //     const exp = await users.findOne(query);
-    //     // console.log(query)
+    //     console.log(exp)
     //     if (exp.role === "user") {
     //       next();
     //     } else {
@@ -116,20 +116,21 @@ async function run() {
     //   // next();
     // };
 
-    // const verifyAdmin = async (req, res, next) => {
-    //   const email = req.user_email;
-    //   // console.log({emaillllll: email})
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.current_user;
+      // console.log({emaillllll: email})
 
-    //   if (email) {
-    //     const query = { email: email };
-    //     const result = await usersCollection.findOne(query);
-    //     if (result.role === "admin") {
-    //       next();
-    //     } else {
-    //       res.status(403).send({ error: "Invalid access" });
-    //     }
-    //   }
-    // };
+      if (email) {
+        const query = { email: email };
+        const result = await users.findOne(query);
+        console.log(result)
+        if (result.role === "admin") {
+          next();
+        } else {
+          res.status(403).send({ error: "Invalid access" });
+        }
+      }
+    };
 
     // const uri = "mongodb+srv://sadia:az2ysmsQhETBpTME@cluster0.sr4duj3.mongodb.net/?appName=Cluster0";
     // const uri = "mongodb+srv://fairbazar:TliIjcf3sWguLBEx@cluster0.sr4duj3.mongodb.net/?appName=Cluster0";
@@ -245,9 +246,9 @@ async function run() {
       }
     });
 
-    app.get('/usersData', verifyFirebaseToken, async (req, res) => {
+    app.get('/usersData', verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try{
-
+        // console.log(req.current_user);
         const result = await users.find().toArray();
         res.status(200).send(result)
 
@@ -270,7 +271,7 @@ async function run() {
       }
     });
 
-    app.post("/kids", verifyFirebaseToken, async (req, res) => {
+    app.post("/kids", verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try {
         const newKids = req.body;
         newKids.addTime = new Date();
@@ -377,7 +378,7 @@ async function run() {
       }
     });
 
-    app.get("/addCart/:email", verifyFirebaseToken, async (req, res) => {
+    app.get("/addCart/:email",  verifyFirebaseToken, async (req, res) => {
       try {
         const { email } = req.params;
         const { search = "" } = req.query; // ক্লায়েন্ট থেকে আসা সার্চ টেক্সট
@@ -410,7 +411,7 @@ async function run() {
       }
     });
 
-    app.post("/discount", verifyFirebaseToken, async (req, res) => {
+    app.post("/discount", verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try {
         const newDiscount = req.body;
         newDiscount.addTime = new Date();
@@ -470,7 +471,7 @@ async function run() {
       }
     });
 
-    app.post("/featured", verifyFirebaseToken, async (req, res) => {
+    app.post("/featured", verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try {
         const newDiscount = req.body;
         newDiscount.addTime = new Date();
@@ -490,7 +491,7 @@ async function run() {
       }
     });
 
-    app.post("/banner", verifyFirebaseToken, async (req, res) => {
+    app.post("/banner", verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try {
         const newBanner = req.body;
         newBanner.addTime = new Date();
