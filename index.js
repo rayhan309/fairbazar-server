@@ -1,4 +1,7 @@
+const dns = require('node:dns');
 
+// Google DNS সেট করা যাতে SRV রেকর্ড সঠিকভাবে কাজ করে
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const express = require("express");
 const nodemailer = require("nodemailer");
@@ -8,6 +11,27 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 4800;
 
+// ------------------------ Firebase Service ------------------------
+const admin = require("firebase-admin");
+
+try {
+  // ১. Base64 string ke decode kore normal string banano
+  const decodedString = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8");
+  
+  // ২. Decode kora string-ke JSON object-e convert kora
+  const serviceAccount = JSON.parse(decodedString);
+
+  // ৩. Firebase initialize kora
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("✅ Firebase Admin Initialized Successfully!");
+  }
+} catch (error) {
+  console.error("❌ Firebase Initialization Error:", error.message);
+}
+
 // ssl commerz
 const SSLCommerzPayment = require("sslcommerz-lts");
 const store_id = process.env.SSL_STORE_ID;
@@ -15,30 +39,37 @@ const store_passwd = process.env.SSL_STORE_PASS;
 const is_live = false; //true for live, false for sandbox
 
 // mdwr
-app.use(cors());
+const corsOptions = {
+    origin: ['https://fairbazar.vercel.app', 'http://localhost:5173'], // ফ্রন্টএন্ড URL গুলো এখানে দিন
+    optionsSuccessStatus: 200 
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // veryfy firebase token
-// const verifyFirebaseToken = async (req, res, next) => {
-//   // console.log(req.headers.authorization );
-//   const firebaseToken = req.headers.authorization;
-//   // console.log(firebaseToken);
-//   if (!firebaseToken) {
-//     return res.status(401).send({ message: "invalid accesss" });
-//   }
+const verifyFirebaseToken = async (req, res, next) => {
+  // console.log(req.headers.authorization );
+  const firebaseToken = req.headers.authorization;
+  // console.log(firebaseToken, 'firebaseToken')
+  // console.log(firebaseToken);
+  if (!firebaseToken) {
+    return res.status(401).send({ message: "invalid accesss" });
+  }
 
-//   try {
-//     const token = firebaseToken.split(" ")[1];
-//     const verify = await admin.auth().verifyIdToken(token);
-//     req.current_user = verify.email;
-//     // console.log("verify token", verify);
-//   } catch {
-//     // console.log("mumma khaisu2!");
-//     return res.status(401).send({ message: "Unexpacted access" });
-//   }
+  try {
+    const token = firebaseToken.split(" ")[1];
+    const verify = await admin.auth().verifyIdToken(token);
+    // console.log(verify);
+    req.current_user = verify?.email;
+    // console.log("verify token", verify);
+  } catch {
+    // console.log("mumma khaisu2!");
+    return res.status(401).send({ message: "Unexpacted access" });
+  }
 
-//   next();
-// };
+  next();
+};
 
 const uri = process.env.DB_URI;
 
@@ -116,7 +147,7 @@ async function run() {
     });
     // console.log({email: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS})
     // ২. Api of aprove and send email
-    app.patch("/contact/approve/:id", async (req, res) => {
+    app.patch("/contact/approve/:id", verifyFirebaseToken, async (req, res) => {
       try {
         const id = req.params.id;
         const { email, name, message } = req.body; // ফ্রন্টএন্ড থেকে পাঠানো মেসেজ
@@ -214,17 +245,19 @@ async function run() {
       }
     });
 
-    app.get("/users", async (req, res) => {
-      try {
+    app.get('/usersData', verifyFirebaseToken, async (req, res) => {
+      try{
+
         const result = await users.find().toArray();
-        res.send(result);
-      } catch (error) {
-        // console.error(error);
-        res.status(500).send({ message: "internal server error!" });
+        res.status(200).send(result)
+
+      }catch (error){
+        console.log(error);
+        res.status(500).send({messagee: 'internal server error'})
       }
     });
 
-    app.get("/user", async (req, res) => {
+    app.get("/user", verifyFirebaseToken, async (req, res) => {
       try {
         const email = req.query.email;
         const query = { email: email };
@@ -237,7 +270,7 @@ async function run() {
       }
     });
 
-    app.post("/kids", async (req, res) => {
+    app.post("/kids", verifyFirebaseToken, async (req, res) => {
       try {
         const newKids = req.body;
         newKids.addTime = new Date();
@@ -251,6 +284,7 @@ async function run() {
     });
 
     app.get("/kids", async (req, res) => {
+      // console.log(req.current_user, 'user email');
       try {
         const { category, limit = 0, page = 0, search = "" } = req.query;
         let skip = 0;
@@ -320,19 +354,19 @@ async function run() {
       }
     });
 
-    app.post("/addCart", async (req, res) => {
+    app.post("/addCart", verifyFirebaseToken, async (req, res) => {
       try {
         const newAddCart = req.body;
         newAddCart.addTime = new Date();
         const result = await addedCart.insertOne(newAddCart);
         // console.log(result);
-        res.send(result);
+        res.status(200).send(result);
       } catch {
         res.status(500).send({ message: "internal server error!" });
       }
     });
 
-    app.get("/addCart", async (req, res) => {
+    app.get("/addCart", verifyFirebaseToken, async (req, res) => {
       try {
         const email = req.query.email;
         const query = { email: email };
@@ -343,7 +377,7 @@ async function run() {
       }
     });
 
-    app.get("/addCart/:email", async (req, res) => {
+    app.get("/addCart/:email", verifyFirebaseToken, async (req, res) => {
       try {
         const { email } = req.params;
         const { search = "" } = req.query; // ক্লায়েন্ট থেকে আসা সার্চ টেক্সট
@@ -365,7 +399,7 @@ async function run() {
       }
     });
 
-    app.delete("/addCart/:id", async (req, res) => {
+    app.delete("/addCart/:id", verifyFirebaseToken, async (req, res) => {
       try {
         const { id } = req.params;
         const query = { _id: new ObjectId(id) };
@@ -376,7 +410,7 @@ async function run() {
       }
     });
 
-    app.post("/discount", async (req, res) => {
+    app.post("/discount", verifyFirebaseToken, async (req, res) => {
       try {
         const newDiscount = req.body;
         newDiscount.addTime = new Date();
@@ -436,7 +470,7 @@ async function run() {
       }
     });
 
-    app.post("/featured", async (req, res) => {
+    app.post("/featured", verifyFirebaseToken, async (req, res) => {
       try {
         const newDiscount = req.body;
         newDiscount.addTime = new Date();
@@ -456,7 +490,7 @@ async function run() {
       }
     });
 
-    app.post("/banner", async (req, res) => {
+    app.post("/banner", verifyFirebaseToken, async (req, res) => {
       try {
         const newBanner = req.body;
         newBanner.addTime = new Date();
@@ -506,7 +540,7 @@ async function run() {
       }
     });
 
-    app.post("/init", async (req, res) => {
+    app.post("/init", verifyFirebaseToken, async (req, res) => {
       try {
         const { product_id, customer_email } = req.body;
 
@@ -701,7 +735,7 @@ async function run() {
     // });
 
     // cash on Delivery
-    app.post("/order-cod", async (req, res) => {
+    app.post("/order-cod", verifyFirebaseToken, async (req, res) => {
       try {
         const { cradItemID, productId, userEmail, ...shippingInfo } = req.body;
 
@@ -794,7 +828,7 @@ async function run() {
       }
     });
 
-    app.get("/orders-counts", async (req, res) => {
+    app.get("/orders-counts", verifyFirebaseToken, async (req, res) => {
       try {
         const totalOrders = await orders.countDocuments();
         res.status(200).send(totalOrders);
@@ -806,7 +840,7 @@ async function run() {
       }
     });
 
-    app.get("/orders-amount", async (req, res) => {
+    app.get("/orders-amount", verifyFirebaseToken, async (req, res) => {
       try {
         const total_amount = await orders
           .find({}, { projection: { "orderedItems.price": 1, _id: 0 } })
@@ -817,7 +851,7 @@ async function run() {
       }
     });
 
-    app.get("/orders", async (req, res) => {
+    app.get("/orders", verifyFirebaseToken, async (req, res) => {
       try {
         const searchTerm = req.query.search;
         const statusFilter = req.query.status;
@@ -848,7 +882,7 @@ async function run() {
       }
     });
     // My Orders Fetching API (Updated)
-    app.get("/myOrders", async (req, res) => {
+    app.get("/myOrders", verifyFirebaseToken, async (req, res) => {
       try {
         const email = req.query.email;
         const searchTerm = req.query.search; // ফ্রন্টএন্ড থেকে আসা সার্চ টার্ম
@@ -890,7 +924,7 @@ async function run() {
       }
     });
 
-    app.patch("/orders/:id", async (req, res) => {
+    app.patch("/orders/:id", verifyFirebaseToken, async (req, res) => {
       try {
         const { status, productId } = req.body;
         const id = req.params.id;
@@ -941,7 +975,7 @@ async function run() {
     });
 
     // customers feedbacks
-    app.post('/feedback', async (req, res) => {
+    app.post('/feedback', verifyFirebaseToken, async (req, res) => {
       try{
         const newFeedback = req?.body;
         newFeedback.addTime = new Date();
