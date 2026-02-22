@@ -17,7 +17,7 @@ const admin = require("firebase-admin");
 try {
   // ১. Base64 string ke decode kore normal string banano
   const decodedString = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString("utf8");
-  
+
   // ২. Decode kora string-ke JSON object-e convert kora
   const serviceAccount = JSON.parse(decodedString);
 
@@ -40,8 +40,8 @@ const is_live = false; //true for live, false for sandbox
 
 // mdwr
 const corsOptions = {
-    origin: ['https://fairbazar.vercel.app', 'http://localhost:5173'], // ফ্রন্টএন্ড URL গুলো এখানে দিন
-    optionsSuccessStatus: 200 
+  origin: ['https://fairbazar.vercel.app', 'http://localhost:5173'], // ফ্রন্টএন্ড URL গুলো এখানে দিন
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -247,14 +247,14 @@ async function run() {
     });
 
     app.get('/usersData', verifyFirebaseToken, verifyAdmin, async (req, res) => {
-      try{
+      try {
         // console.log(req.current_user);
         const result = await users.find().toArray();
         res.status(200).send(result)
 
-      }catch (error){
+      } catch (error) {
         console.log(error);
-        res.status(500).send({messagee: 'internal server error'})
+        res.status(500).send({ messagee: 'internal server error' })
       }
     });
 
@@ -270,6 +270,33 @@ async function run() {
         res.status(500).send({ message: "internal server error!" });
       }
     });
+
+    app.patch('/user/:id', async (req, res) => {
+      try {
+        const { role } = req.body;
+        const { id } = req.params;
+
+        if (!role || !id) return res.status(500).send({ message: 'intarnal server error!' })
+
+        const query = { _id: new ObjectId(id) };
+
+        // console.log(query);
+
+        const updated = await users.updateOne(query, {
+          $set: {
+            role: role
+          }
+        });
+
+        // console.log(updated);
+
+        res.status(200).send(updated);
+
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({ messaga: 'internal server error!' })
+      }
+    })
 
     app.post("/kids", verifyFirebaseToken, verifyAdmin, async (req, res) => {
       try {
@@ -292,7 +319,7 @@ async function run() {
         if (page > 1) {
           skip = Number(limit) * Number(page - 1);
         }
-        const query = {stock: { $gt: 0 }};
+        const query = { stock: { $gt: 0 } };
         if (search) {
           query.title = { $regex: search, $options: "i" }; // "i" মানে case-insensitive
         }
@@ -378,7 +405,7 @@ async function run() {
       }
     });
 
-    app.get("/addCart/:email",  verifyFirebaseToken, async (req, res) => {
+    app.get("/addCart/:email", verifyFirebaseToken, async (req, res) => {
       try {
         const { email } = req.params;
         const { search = "" } = req.query; // ক্লায়েন্ট থেকে আসা সার্চ টেক্সট
@@ -433,7 +460,7 @@ async function run() {
           skip = Number(limit) * (Number(page) - 1);
         }
 
-        const query = {stock: { $gt: 0 }};
+        const query = { stock: { $gt: 0 } };
         if (search) {
           query.title = { $regex: search, $options: "i" };
         }
@@ -977,22 +1004,22 @@ async function run() {
 
     // customers feedbacks
     app.post('/feedback', verifyFirebaseToken, async (req, res) => {
-      try{
+      try {
         const newFeedback = req?.body;
         newFeedback.addTime = new Date();
-        const result  = await feedbacks.insertOne(newFeedback);
+        const result = await feedbacks.insertOne(newFeedback);
         res.status(200).send(result)
-      }catch(error) {
+      } catch (error) {
         console.log(error);
-        res.status(500).send({message: 'internal server error!'})
+        res.status(500).send({ message: 'internal server error!' })
       }
     });
 
     app.get('/feedback', async (req, res) => {
-      try{
+      try {
         const result = await feedbacks.find().toArray();
         res.status(200).send(result);
-      }catch(error){
+      } catch (error) {
         console.log(error);
         res.status(500).send('internal servber error!')
       }
